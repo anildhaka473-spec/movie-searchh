@@ -1,21 +1,28 @@
 <?php
 
-$host = getenv("DB_HOST") ?: "localhost";
-$user = getenv("DB_USER") ?: "root";
-$password = getenv("DB_PASSWORD") ?: "";
-$database = getenv("DB_NAME") ?: "movies";
+$conn = null;
+
+$host = getenv("DB_HOST");
+$user = getenv("DB_USER");
+$password = getenv("DB_PASSWORD");
+$database = getenv("DB_NAME");
 $port = (int) (getenv("DB_PORT") ?: 3306);
 
-$conn = @mysqli_connect(
-    $host,
-    $user,
-    $password,
-    $database,
-    $port
-);
+if ($host && $user && $database) {
 
-if ($conn) {
-    mysqli_set_charset($conn, "utf8mb4");
+    mysqli_report(MYSQLI_REPORT_OFF);
+
+    $conn = @mysqli_connect(
+        $host,
+        $user,
+        $password ?: "",
+        $database,
+        $port
+    );
+
+    if ($conn) {
+        mysqli_set_charset($conn, "utf8mb4");
+    }
 }
 
 ?>
