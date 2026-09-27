@@ -1,17 +1,16 @@
 <?php
 
-header("Content-Type: text/html; charset=UTF-8");
+header(
+    "Content-Type: text/html; charset=UTF-8"
+);
 
 
 if (!isset($_GET["movie"])) {
 
-    echo '
-        <div class="empty-state">
-            <div class="empty-icon">🔍</div>
-            <h2>Enter a movie name</h2>
-            <p>Search for a movie to see its details.</p>
-        </div>
-    ';
+    showError(
+        "Search required",
+        "Please enter a movie name."
+    );
 
     exit;
 }
@@ -22,12 +21,21 @@ $movie = trim($_GET["movie"]);
 
 if ($movie === "") {
 
-    echo '
-        <div class="empty-state">
-            <div class="empty-icon">⚠️</div>
-            <h2>Movie name is required</h2>
-        </div>
-    ';
+    showError(
+        "Search required",
+        "Please enter a movie name."
+    );
+
+    exit;
+}
+
+
+if (mb_strlen($movie) > 100) {
+
+    showError(
+        "Invalid search",
+        "Movie name is too long."
+    );
 
     exit;
 }
@@ -38,82 +46,82 @@ $apiKey = getenv("OMDB_API_KEY");
 
 if (!$apiKey) {
 
-    echo '
-        <div class="error-card">
-            <h2>API Configuration Error</h2>
-            <p>OMDb API key is not configured on the server.</p>
-        </div>
-    ';
+    showError(
+        "API key missing",
+        "OMDb API key has not been configured on the server."
+    );
 
     exit;
 }
 
 
 $url =
-    "https://www.omdbapi.com/?apikey="
-    . urlencode($apiKey)
-    . "&t="
-    . urlencode($movie)
-    . "&plot=full";
+    "https://www.omdbapi.com/" .
+    "?apikey=" . urlencode($apiKey) .
+    "&t=" . urlencode($movie) .
+    "&plot=full";
 
 
 $context = stream_context_create([
     "http" => [
         "method" => "GET",
-        "timeout" => 10
+        "timeout" => 10,
+        "ignore_errors" => true
     ]
 ]);
 
 
-$response = @file_get_contents($url, false, $context);
+$response = @file_get_contents(
+    $url,
+    false,
+    $context
+);
 
 
 if ($response === false) {
 
-    echo '
-        <div class="error-card">
-            <h2>Unable to reach movie service</h2>
-            <p>Please try again in a moment.</p>
-        </div>
-    ';
+    showError(
+        "Service unavailable",
+        "Unable to connect to the movie service."
+    );
 
     exit;
 }
 
 
-$data = json_decode($response, true);
+$data = json_decode(
+    $response,
+    true
+);
 
 
 if (
-    !$data ||
-    !isset($data["Response"]) ||
-    $data["Response"] !== "True"
+    !is_array($data) ||
+    ($data["Response"] ?? "False") !== "True"
 ) {
 
-    echo '
-        <div class="empty-state">
-
-            <div class="empty-icon">🎬</div>
-
-            <h2>Movie not found</h2>
-
-            <p>
-                We could not find a movie matching
-                <strong>'
-                . htmlspecialchars($movie, ENT_QUOTES, "UTF-8")
-                . '</strong>.
-            </p>
-
-        </div>
-    ';
+    showError(
+        "Movie not found",
+        "No movie was found for \"" .
+        htmlspecialchars(
+            $movie,
+            ENT_QUOTES,
+            "UTF-8"
+        ) .
+        "\"."
+    );
 
     exit;
 }
 
 
-function clean($value)
+function cleanValue($value)
 {
-    if (!$value || $value === "N/A") {
+    if (
+        !isset($value) ||
+        $value === "" ||
+        $value === "N/A"
+    ) {
         return "Not available";
     }
 
@@ -125,28 +133,96 @@ function clean($value)
 }
 
 
-$title = clean($data["Title"] ?? "");
-$year = clean($data["Year"] ?? "");
-$genre = clean($data["Genre"] ?? "");
-$director = clean($data["Director"] ?? "");
-$actors = clean($data["Actors"] ?? "");
-$plot = clean($data["Plot"] ?? "");
-$runtime = clean($data["Runtime"] ?? "");
-$language = clean($data["Language"] ?? "");
-$country = clean($data["Country"] ?? "");
-$rating = clean($data["imdbRating"] ?? "");
-$votes = clean($data["imdbVotes"] ?? "");
-$released = clean($data["Released"] ?? "");
+function showError($title, $message)
+{
+    ?>
+
+    <div class="error-card">
+
+        <div class="empty-icon">
+            🎬
+        </div>
+
+        <h2>
+            <?= htmlspecialchars(
+                $title,
+                ENT_QUOTES,
+                "UTF-8"
+            ) ?>
+        </h2>
+
+        <p>
+            <?= $message ?>
+        </p>
+
+    </div>
+
+    <?php
+}
+
+
+$title = cleanValue(
+    $data["Title"] ?? null
+);
+
+$year = cleanValue(
+    $data["Year"] ?? null
+);
+
+$genre = cleanValue(
+    $data["Genre"] ?? null
+);
+
+$director = cleanValue(
+    $data["Director"] ?? null
+);
+
+$actors = cleanValue(
+    $data["Actors"] ?? null
+);
+
+$plot = cleanValue(
+    $data["Plot"] ?? null
+);
+
+$runtime = cleanValue(
+    $data["Runtime"] ?? null
+);
+
+$language = cleanValue(
+    $data["Language"] ?? null
+);
+
+$country = cleanValue(
+    $data["Country"] ?? null
+);
+
+$rating = cleanValue(
+    $data["imdbRating"] ?? null
+);
+
+$votes = cleanValue(
+    $data["imdbVotes"] ?? null
+);
+
+$released = cleanValue(
+    $data["Released"] ?? null
+);
+
+
 $poster = $data["Poster"] ?? "";
 
 
 if (
-    empty($poster) ||
+    !$poster ||
     $poster === "N/A"
 ) {
 
-    $poster = "https://via.placeholder.com/400x600?text=No+Poster";
+    $poster =
+        "https://via.placeholder.com/400x600" .
+        "?text=No+Poster";
 }
+
 
 $poster = htmlspecialchars(
     $poster,
@@ -156,7 +232,9 @@ $poster = htmlspecialchars(
 
 ?>
 
+
 <div class="movie-card">
+
 
     <div class="movie-poster">
 
@@ -164,6 +242,7 @@ $poster = htmlspecialchars(
             src="<?= $poster ?>"
             alt="<?= $title ?> poster"
             loading="lazy"
+            onerror="this.src='https://via.placeholder.com/400x600?text=No+Poster'"
         >
 
     </div>
@@ -171,27 +250,33 @@ $poster = htmlspecialchars(
 
     <div class="movie-info">
 
-        <div class="movie-heading">
+        <span class="movie-label">
+            MOVIE
+        </span>
 
-            <span class="movie-label">
-                MOVIE
+
+        <h2>
+            <?= $title ?>
+        </h2>
+
+
+        <div class="movie-meta">
+
+            <span>
+                <?= $year ?>
             </span>
 
-            <h2><?= $title ?></h2>
+            <span>•</span>
 
-            <div class="movie-meta">
+            <span>
+                <?= $runtime ?>
+            </span>
 
-                <span><?= $year ?></span>
+            <span>•</span>
 
-                <span>•</span>
-
-                <span><?= $runtime ?></span>
-
-                <span>•</span>
-
-                <span><?= $genre ?></span>
-
-            </div>
+            <span>
+                <?= $genre ?>
+            </span>
 
         </div>
 
@@ -200,11 +285,17 @@ $poster = htmlspecialchars(
 
             <div class="rating">
 
-                <span class="star">★</span>
+                <span class="star">
+                    ★
+                </span>
 
-                <strong><?= $rating ?></strong>
+                <strong>
+                    <?= $rating ?>
+                </strong>
 
-                <span>/ 10</span>
+                <span>
+                    / 10
+                </span>
 
                 <?php if ($votes !== "Not available"): ?>
 
@@ -221,60 +312,87 @@ $poster = htmlspecialchars(
 
         <div class="details-grid">
 
+
             <div class="detail">
 
-                <span>Director</span>
+                <span>
+                    Director
+                </span>
 
-                <strong><?= $director ?></strong>
+                <strong>
+                    <?= $director ?>
+                </strong>
 
             </div>
 
 
             <div class="detail">
 
-                <span>Released</span>
+                <span>
+                    Released
+                </span>
 
-                <strong><?= $released ?></strong>
-
-            </div>
-
-
-            <div class="detail">
-
-                <span>Language</span>
-
-                <strong><?= $language ?></strong>
+                <strong>
+                    <?= $released ?>
+                </strong>
 
             </div>
 
 
             <div class="detail">
 
-                <span>Country</span>
+                <span>
+                    Language
+                </span>
 
-                <strong><?= $country ?></strong>
+                <strong>
+                    <?= $language ?>
+                </strong>
 
             </div>
+
+
+            <div class="detail">
+
+                <span>
+                    Country
+                </span>
+
+                <strong>
+                    <?= $country ?>
+                </strong>
+
+            </div>
+
 
         </div>
 
 
         <div class="plot">
 
-            <h3>Story</h3>
+            <h3>
+                Story
+            </h3>
 
-            <p><?= $plot ?></p>
+            <p>
+                <?= $plot ?>
+            </p>
 
         </div>
 
 
         <div class="cast">
 
-            <h3>Cast</h3>
+            <h3>
+                Cast
+            </h3>
 
-            <p><?= $actors ?></p>
+            <p>
+                <?= $actors ?>
+            </p>
 
         </div>
+
 
     </div>
 
