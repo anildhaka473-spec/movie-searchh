@@ -1,36 +1,49 @@
 <?php
+
 session_start();
 
 $userName = $_SESSION["name"] ?? null;
+
 ?>
 
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Movie Search</title>
+    <meta
+        name="description"
+        content="Search movies, ratings, genres, actors and more."
+    >
+
+    <title>MovieSearch — Discover Movies</title>
 
     <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
 <header class="navbar">
 
-    <div class="logo">
-        🎬 <span>Movie<span class="accent">Search</span></span>
-    </div>
+    <a href="index.php" class="logo">
+        🎬 Movie<span>Search</span>
+    </a>
 
     <div class="nav-right">
 
         <?php if ($userName): ?>
 
             <span class="welcome">
-                Hi, <?= htmlspecialchars($userName) ?>
+                Hi, <?= htmlspecialchars($userName, ENT_QUOTES, "UTF-8") ?>
             </span>
 
         <?php else: ?>
@@ -46,66 +59,78 @@ $userName = $_SESSION["name"] ?? null;
 </header>
 
 
-<main class="hero">
+<main>
 
-    <div class="hero-content">
+    <section class="hero">
 
-        <div class="badge">
-            🎥 YOUR MOVIE DISCOVERY PLATFORM
-        </div>
+        <div class="hero-content">
 
-        <h1>
-            Find Your Next
-            <span>Favorite Movie</span>
-        </h1>
+            <div class="badge">
+                🎥 MOVIE DISCOVERY PLATFORM
+            </div>
 
-        <p class="subtitle">
-            Search thousands of movies and discover ratings,
-            genres, actors, directors and more.
-        </p>
+            <h1>
+                Find Your Next
+                <span>Favorite Movie</span>
+            </h1>
 
-
-        <form id="searchForm" class="search-box">
-
-            <input
-                type="text"
-                id="movieInput"
-                name="movie"
-                placeholder="Search for a movie..."
-                autocomplete="off"
-                required
-            >
-
-            <button type="submit">
-                🔍 Search
-            </button>
-
-        </form>
-
-    </div>
-
-</main>
-
-
-<section class="results-section">
-
-    <div id="result">
-
-        <div class="empty-state">
-
-            <div class="empty-icon">🎬</div>
-
-            <h2>Search for a movie</h2>
-
-            <p>
-                Enter a movie name above to see its details.
+            <p class="subtitle">
+                Search movies and discover posters, ratings,
+                genres, actors, directors and complete details.
             </p>
 
+
+            <form
+                id="searchForm"
+                class="search-box"
+                autocomplete="off"
+            >
+
+                <input
+                    type="text"
+                    id="movieInput"
+                    name="movie"
+                    placeholder="Search movie name..."
+                    maxlength="100"
+                    required
+                >
+
+                <button type="submit" id="searchButton">
+                    Search
+                </button>
+
+            </form>
+
         </div>
 
-    </div>
+    </section>
 
-</section>
+
+    <section class="results-section">
+
+        <div id="result">
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    🎬
+                </div>
+
+                <h2>
+                    Search for a movie
+                </h2>
+
+                <p>
+                    Enter a movie name above to get started.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
 
 
 <footer>
@@ -120,4 +145,5 @@ $userName = $_SESSION["name"] ?? null;
 <script src="script.js"></script>
 
 </body>
+
 </html>
