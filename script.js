@@ -1,65 +1,52 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    const searchForm = document.getElementById("searchForm");
-    const movieInput = document.getElementById("movieInput");
+    const form = document.getElementById("searchForm");
+    const input = document.getElementById("movieInput");
     const result = document.getElementById("result");
+    const button = document.getElementById("searchButton");
 
-    if (!searchForm || !movieInput || !result) {
+
+    if (!form || !input || !result) {
         return;
     }
 
 
-    searchForm.addEventListener("submit", async (event) => {
+    form.addEventListener("submit", async (event) => {
 
         event.preventDefault();
 
-        const movie = movieInput.value.trim();
+
+        const movie = input.value.trim();
+
 
         if (!movie) {
-            showMessage("Please enter a movie name.");
+
+            showMessage(
+                "Please enter a movie name.",
+                "⚠️"
+            );
+
+            input.focus();
+
             return;
         }
 
 
-        showLoading();
-
-
-        try {
-
-            const response = await fetch(
-                `search.php?movie=${encodeURIComponent(movie)}`
-            );
-
-
-            if (!response.ok) {
-                throw new Error("Server error");
-            }
-
-
-            const html = await response.text();
-
-            result.innerHTML = html;
-
-            result.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-
-
-        } catch (error) {
-
-            console.error(error);
+        if (movie.length > 100) {
 
             showMessage(
-                "Something went wrong. Please try again."
+                "Movie name is too long.",
+                "⚠️"
             );
 
+            return;
         }
 
-    });
 
+        button.disabled = true;
 
-    function showLoading() {
+        button.textContent = "Searching...";
+
 
         result.innerHTML = `
             <div class="loading-state">
@@ -72,28 +59,98 @@ document.addEventListener("DOMContentLoaded", () => {
 
             </div>
         `;
-    }
 
 
-    function showMessage(message) {
+        try {
+
+            const response = await fetch(
+                "search.php?movie=" +
+                encodeURIComponent(movie),
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "text/html"
+                    }
+                }
+            );
+
+
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP error: ${response.status}`
+                );
+            }
+
+
+            const html = await response.text();
+
+
+            if (!html.trim()) {
+
+                throw new Error(
+                    "Empty server response"
+                );
+            }
+
+
+            result.innerHTML = html;
+
+
+            result.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Movie search error:",
+                error
+            );
+
+
+            showMessage(
+                "Unable to search right now. Please try again.",
+                "⚠️"
+            );
+
+        } finally {
+
+            button.disabled = false;
+
+            button.textContent = "Search";
+
+        }
+
+    });
+
+
+    function showMessage(message, icon) {
 
         result.innerHTML = `
             <div class="empty-state">
 
-                <div class="empty-icon">⚠️</div>
+                <div class="empty-icon">
+                    ${icon}
+                </div>
 
-                <h2>${escapeHTML(message)}</h2>
+                <h2>
+                    ${escapeHTML(message)}
+                </h2>
 
             </div>
         `;
+
     }
 
 
-    function escapeHTML(text) {
+    function escapeHTML(value) {
 
-        const div = document.createElement("div");
+        const div =
+            document.createElement("div");
 
-        div.textContent = text;
+        div.textContent = value;
 
         return div.innerHTML;
     }
